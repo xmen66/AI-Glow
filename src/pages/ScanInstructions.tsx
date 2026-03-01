@@ -44,23 +44,28 @@ const ScanInstructions = () => {
             exit={{ x: -300, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="flex flex-col items-center text-center max-w-xs"
+            role="tabpanel"
+            aria-labelledby={`step-${step}-title`}
           >
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-8">
               {instructions[step].icon}
             </div>
             
-            <h2 className="text-2xl font-bold mb-4">{instructions[step].title}</h2>
+            <h2 id={`step-${step}-title`} className="text-2xl font-bold mb-4">{instructions[step].title}</h2>
             <p className="text-gray-600 mb-8 text-lg">
               {instructions[step].description}
             </p>
           </motion.div>
         </AnimatePresence>
 
-        <div className="flex gap-2 mt-8">
+        <div className="flex gap-2 mt-8" role="tablist">
           {instructions.map((_, i) => (
             <div 
               key={i} 
               className={`h-2 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-pink-500' : 'w-2 bg-pink-200'}`}
+              role="tab"
+              aria-selected={i === step}
+              aria-label={`Step ${i + 1}`}
             />
           ))}
         </div>

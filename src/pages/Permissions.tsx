@@ -51,12 +51,16 @@ const Permissions = () => {
               exit="exit"
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex flex-col items-center text-center w-full"
+              role="dialog"
+              aria-labelledby="notify-title"
+              aria-describedby="notify-desc"
+              aria-modal="true"
             >
               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
                 <Bell className="text-blue-500 w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold mb-4">Stay Consistent</h2>
-              <p className="text-gray-600 mb-8">
+              <h2 id="notify-title" className="text-2xl font-bold mb-4">Stay Consistent</h2>
+              <p id="notify-desc" className="text-gray-600 mb-8">
                 Allow notifications so you don't forget your skincare rituals.
               </p>
               <div className="w-full space-y-3">
@@ -85,12 +89,16 @@ const Permissions = () => {
               exit="exit"
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex flex-col items-center text-center w-full"
+              role="dialog"
+              aria-labelledby="camera-title"
+              aria-describedby="camera-desc"
+              aria-modal="true"
             >
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                 <Camera className="text-green-500 w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold mb-4">Camera Access</h2>
-              <p className="text-gray-600 mb-8">
+              <h2 id="camera-title" className="text-2xl font-bold mb-4">Camera Access</h2>
+              <p id="camera-desc" className="text-gray-600 mb-8">
                 Allow access to camera and photo gallery to scan your skin.
               </p>
               <div className="w-full space-y-3">
@@ -113,12 +121,16 @@ const Permissions = () => {
               exit="exit"
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex flex-col items-center text-center w-full"
+              role="dialog"
+              aria-labelledby="privacy-title"
+              aria-describedby="privacy-desc"
+              aria-modal="true"
             >
               <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 <Lock className="text-purple-500 w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold mb-4">Privacy First</h2>
-              <p className="text-gray-600 mb-8">
+              <h2 id="privacy-title" className="text-2xl font-bold mb-4">Privacy First</h2>
+              <p id="privacy-desc" className="text-gray-600 mb-8">
                 Your photos are processed privately and securely. We prioritize your data privacy.
               </p>
               <div className="w-full space-y-3">

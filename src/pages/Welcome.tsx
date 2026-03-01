@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';

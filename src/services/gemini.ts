@@ -1,120 +1,121 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { SkinAnalysisResult } from "../types";
 
-// API Key configuration with fallback for development/demo
-const getApiKey = () => {
-  // Check for Vite environment variable
-  if (import.meta.env.VITE_GEMINI_API_KEY) {
-    return import.meta.env.VITE_GEMINI_API_KEY;
-  }
-  // Check for potential Next.js style environment variable (in case of hybrid setup)
-  // @ts-ignore
-  if (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
-    // @ts-ignore
-    return process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  }
-  // Fallback to provided key for demo purposes
-  return "AIzaSyD3Xmdgxxe4sRFJf3wVlLXDvqfYlNHSE7M";
-};
-
-const API_KEY = getApiKey();
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-export interface AnalysisResult {
-  skinType: string;
-  sensitivity: string;
-  concerns: { area: string; issue: string; severity: string }[];
-  strengths: { title: string; description: string }[];
-  mainGoal: string;
-  routine: { step: string; title: string; description: string; ingredients: string }[];
-}
-
-export async function analyzeSkin(imageBase64: string): Promise<AnalysisResult> {
+export const analyzeSkin = async (imageBase64: string): Promise<SkinAnalysisResult | { error: true }> => {
   try {
-    // Using gemini-2.5-flash as requested for stability
+    // 1. Lazy Initialize API Key inside the function
+    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+
+    if (!API_KEY) {
+      console.warn("[Skin Service] API Key missing");
+      return { error: true };
+    }
+
+    // 2. Initialize Client
+    const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const prompt = `Act as a professional dermatologist. Analyze this face scan carefully.
-    Identify skin type, key concerns (wrinkles, dark circles, acne, etc.), and strengths.
-    Create a personalized skincare routine.
-    
-    Return a STRICT JSON object with this exact schema:
-    {
-      "skinType": "Normal" | "Oily" | "Dry" | "Combination",
-      "sensitivity": "Low" | "Medium" | "High",
-      "concerns": [
-        { "area": "Cheeks" | "Forehead" | "T-Zone" | "Eyes" | "Chin", "issue": "Short description", "severity": "Low" | "Medium" | "High" }
-      ],
-      "strengths": [
-        { "title": "Short Title", "description": "Short positive description" }
-      ],
-      "mainGoal": "One clear main skincare goal",
-      "routine": [
-        { "step": "Step 1", "title": "Cleansing", "description": "Specific instruction", "ingredients": "Key active ingredients" },
-        { "step": "Step 2", "title": "Treatment", "description": "Specific instruction", "ingredients": "Key active ingredients" },
-        { "step": "Step 3", "title": "Hydration", "description": "Specific instruction", "ingredients": "Key active ingredients" },
-        { "step": "Step 4", "title": "Protection", "description": "Specific instruction", "ingredients": "Key active ingredients" }
-      ]
-    }`;
+    // 3. Clean the Base64 string (Strict Rule)
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    // Robust Base64 handling
-    const base64Data = imageBase64.includes("base64,") 
-      ? imageBase64.split("base64,")[1] 
-      : imageBase64;
+    if (!cleanBase64) {
+      return { error: true };
+    }
 
-    const imageParts = [
+    // 4. Prepare the prompt
+    const prompt = `
+      Act as a professional dermatologist. Analyze this face scan carefully.
+      Return a STRICT JSON object (no markdown, no code blocks) with the following structure:
+      {
+        "skinType": "Oily" | "Dry" | "Combination" | "Normal" | "Sensitive",
+        "sensitivity": "Low" | "Medium" | "High",
+        "mainGoal": "Clear Acne" | "Reduce Wrinkles" | "Hydrate",
+        "concerns": [
+          { "area": "Forehead", "issue": "Fine lines", "severity": "Mild" },
+          { "area": "Cheeks", "issue": "Redness", "severity": "Medium" }
+        ],
+        "strengths": [
+          { "title": "Jawline", "description": "Well defined" }
+        ],
+        "routine": [
+          { "step": "1", "title": "Cleanser", "description": "Gentle Foaming Cleanser", "ingredients": "Salicylic Acid" }
+        ],
+      }
+    `;
+
+    // 5. Call the API
+    const result = await model.generateContent([
+      prompt,
       {
         inlineData: {
-          data: base64Data,
+          data: cleanBase64,
           mimeType: "image/jpeg",
         },
       },
-    ];
+    ]);
 
-    const result = await model.generateContent([prompt, ...imageParts]);
     const response = await result.response;
     const text = response.text();
-    
-    // Clean up markdown code blocks if present
-    const cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    // 6. Parse JSON safely
+    const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
     
     try {
-      const parsedData = JSON.parse(cleanText);
-      return parsedData;
+      const data = JSON.parse(jsonString) as SkinAnalysisResult;
+      // Basic validation
+      if (!data.skinType || !data.routine) {
+        throw new Error("Invalid response structure");
+      }
+      return data;
     } catch (parseError) {
-      console.error("JSON Parse Error:", parseError, "Raw Text:", text);
-      throw new Error("Failed to parse analysis results");
+      console.error("[Skin Service] JSON Parse Error", parseError);
+      return { error: true };
     }
 
-  } catch (error: any) {
-    console.error("Gemini Analysis Failed:", error);
-    
-    // Specific error handling for 500/Server Errors
-    if (error.message?.includes("500") || error.status === 500) {
-      throw new Error("Server Busy");
-    }
-    
-    throw new Error("Analysis Failed. Please try again.");
+  } catch (error) {
+    // GLOBAL ERROR INTERCEPTOR
+    // Swallow all errors (403, 500, etc) and return simplified error object
+    console.error("[Skin Service] Request Failed", error);
+    return { error: true };
   }
-}
+};
 
-export async function chatWithAI(message: string, context: any) {
+export const chatWithAI = async (message: string, context?: SkinAnalysisResult | null): Promise<string> => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    
-    const prompt = `
-    You are a friendly, expert AI skincare assistant.
-    User's Skin Analysis Context: ${JSON.stringify(context)}
-    
-    User Message: ${message}
-    
-    Reply in a helpful, concise, and friendly manner. Keep it short (under 3 sentences unless detailed explanation is asked).
-    `;
+    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+    if (!API_KEY) return "I'm having trouble connecting right now. Please try again later.";
 
-    const result = await model.generateContent(prompt);
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{ text: "You are a helpful skincare assistant. Keep answers brief and friendly." }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Hello! I'm here to help you with your skincare journey." }],
+        },
+      ],
+    });
+
+    let contextPrompt = message;
+    if (context) {
+        contextPrompt = `
+        Context about my skin:
+        Type: ${context.skinType}
+        Concerns: ${context.concerns.map(c => c.issue).join(", ")}
+        
+        My Question: ${message}
+        `;
+    }
+
+    const result = await chat.sendMessage(contextPrompt);
     const response = await result.response;
     return response.text();
   } catch (error) {
-    console.error("Chat Error:", error);
     return "I'm having trouble connecting right now. Please try again later.";
   }
-}
+};

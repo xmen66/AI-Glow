@@ -29,16 +29,14 @@ const Chat = () => {
     setInput('');
     setLoading(true);
 
-    const context = analysisResult ? {
-      skinType: analysisResult.skinType,
-      concerns: analysisResult.concerns,
-      routine: analysisResult.routine
-    } : { note: "User hasn't completed scan yet." };
-
-    const responseText = await chatWithAI(input, context);
-    
-    setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
-    setLoading(false);
+    try {
+      const responseText = await chatWithAI(input, analysisResult);
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now." }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -75,12 +75,18 @@ const CameraScan = () => {
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center p-6 text-center text-white z-20">
+          <div 
+            className="flex flex-col items-center justify-center p-6 text-center text-white z-20"
+            role="alertdialog"
+            aria-labelledby="camera-error-title"
+            aria-describedby="camera-error-desc"
+            aria-modal="true"
+          >
             <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-6">
               <CameraOff size={40} className="text-gray-400" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Camera Access Denied</h2>
-            <p className="text-gray-400 mb-8 max-w-xs">
+            <h2 id="camera-error-title" className="text-xl font-bold mb-2">Camera Access Denied</h2>
+            <p id="camera-error-desc" className="text-gray-400 mb-8 max-w-xs">
               We couldn't access your camera. Please check your permissions or upload a photo instead.
             </p>
             <button
