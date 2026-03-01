@@ -13,7 +13,7 @@ const getApiKey = () => {
     return process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   }
   // Fallback to provided key for demo purposes
-  return "AIzaSyDg2NPqcGJ8wrVi5m5G_rtMrerTV1eKnaI";
+  return "AIzaSyD3Xmdgxxe4sRFJf3wVlLXDvqfYlNHSE7M";
 };
 
 const API_KEY = getApiKey();
