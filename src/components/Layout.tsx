@@ -10,8 +10,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const showHeader = location.pathname !== '/' && location.pathname !== '/permissions';
-  const showBack = location.pathname !== '/' && location.pathname !== '/results' && location.pathname !== '/permissions';
+  const showHeader = location.pathname !== '/' && location.pathname !== '/permissions' && location.pathname !== '/camera-scan';
+  const showBack = location.pathname !== '/' && location.pathname !== '/results' && location.pathname !== '/permissions' && location.pathname !== '/camera-scan';
 
   return (
     <div className="min-h-screen bg-pink-50 flex justify-center">

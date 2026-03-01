@@ -37,9 +37,7 @@ const StepContainer = ({ children }: { children: ReactNode }) => {
       setDirection('backward');
     }
     setCurrentStep(nextStep);
-    // Optional: Log step for debugging
-    // console.log(`Step: ${nextStep} (${location.pathname})`);
-  }, [location.pathname]);
+  }, [location.pathname, currentStep]);
 
   return (
     <div 

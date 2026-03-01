@@ -3,15 +3,15 @@ import { SkinAnalysisResult } from "../types";
 
 export const analyzeSkin = async (imageBase64: string): Promise<SkinAnalysisResult | { error: true }> => {
   try {
-    // 1. Lazy Initialize API Key inside the function
-    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+    // 1. Strict API Key Check
+    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
 
     if (!API_KEY) {
-      console.warn("[Skin Service] API Key missing");
+      console.warn("[Skin Service] API Key missing from build");
       return { error: true };
     }
 
-    // 2. Initialize Client
+    // 2. Initialize Client (Lazy Init)
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -22,7 +22,7 @@ export const analyzeSkin = async (imageBase64: string): Promise<SkinAnalysisResu
       return { error: true };
     }
 
-    // 4. Prepare the prompt
+    // 4. Prepare the prompt (No Trailing Commas)
     const prompt = `
       Act as a professional dermatologist. Analyze this face scan carefully.
       Return a STRICT JSON object (no markdown, no code blocks) with the following structure:
@@ -39,7 +39,7 @@ export const analyzeSkin = async (imageBase64: string): Promise<SkinAnalysisResu
         ],
         "routine": [
           { "step": "1", "title": "Cleanser", "description": "Gentle Foaming Cleanser", "ingredients": "Salicylic Acid" }
-        ],
+        ]
       }
     `;
 
@@ -57,8 +57,14 @@ export const analyzeSkin = async (imageBase64: string): Promise<SkinAnalysisResu
     const response = await result.response;
     const text = response.text();
 
-    // 6. Parse JSON safely
-    const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    // 6. Robust JSON Cleaning (Regex Match)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) {
+      throw new Error("No JSON found in response");
+    }
+
+    const jsonString = jsonMatch[0];
     
     try {
       const data = JSON.parse(jsonString) as SkinAnalysisResult;
@@ -82,7 +88,7 @@ export const analyzeSkin = async (imageBase64: string): Promise<SkinAnalysisResu
 
 export const chatWithAI = async (message: string, context?: SkinAnalysisResult | null): Promise<string> => {
   try {
-    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
     if (!API_KEY) return "I'm having trouble connecting right now. Please try again later.";
 
     const genAI = new GoogleGenerativeAI(API_KEY);

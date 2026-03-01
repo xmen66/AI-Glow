@@ -11,6 +11,11 @@ const __dirname = path.dirname(__filename);
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), viteSingleFile()],
+  define: {
+    'process.env': {
+      NEXT_PUBLIC_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

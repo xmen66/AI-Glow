@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ArrowRight, CheckCircle, Droplets, Sun, Activity } from 'lucide-react';
@@ -11,9 +11,18 @@ const Results = () => {
   const [activeTab, setActiveTab] = useState('concerns');
 
   if (!analysisResult) {
-    navigate('/');
-    return null;
+    // This should be handled by a useEffect, but returning null prevents rendering.
+    // However, calling navigate during render is bad practice.
+    // We will rely on the useEffect below.
   }
+
+  useEffect(() => {
+    if (!analysisResult) {
+      navigate('/', { replace: true });
+    }
+  }, [analysisResult, navigate]);
+
+  if (!analysisResult) return null;
 
   const { skinType, sensitivity, concerns, strengths, mainGoal } = analysisResult;
 
